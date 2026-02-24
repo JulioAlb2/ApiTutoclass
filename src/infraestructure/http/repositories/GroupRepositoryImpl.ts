@@ -34,13 +34,9 @@ function mapRowToGroup(row: GroupRow): Group {
 }
 
 export class GroupRepositoryImpl implements IGroupRepository {
-  
   async findById(id: number): Promise<Group | null> {
     try {
-      const result = await db.query(
-        "SELECT * FROM grupos WHERE id = $1",
-        [id]
-      );
+      const result = await db.query("SELECT * FROM grupos WHERE id = ?", [id]);
       if (result.rows.length === 0) return null;
       return mapRowToGroup(result.rows[0] as GroupRow);
     } catch (error) {
@@ -51,7 +47,7 @@ export class GroupRepositoryImpl implements IGroupRepository {
   async findByCode(code: string): Promise<Group | null> {
     try {
       const result = await db.query(
-        "SELECT * FROM grupos WHERE codigo_acceso = $1",
+        "SELECT * FROM grupos WHERE codigo_acceso = ?",
         [code]
       );
       if (result.rows.length === 0) return null;
@@ -64,10 +60,10 @@ export class GroupRepositoryImpl implements IGroupRepository {
   async findAllActive(): Promise<Group[]> {
     try {
       const result = await db.query(
-        "SELECT * FROM grupos WHERE estado = $1 ORDER BY fecha DESC, id",
+        "SELECT * FROM grupos WHERE estado = ? ORDER BY fecha DESC, id",
         [GroupStatus.ACTIVE]
       );
-      return result.rows.map((row:GroupRow) => mapRowToGroup(row as GroupRow));
+      return result.rows.map((row) => mapRowToGroup(row as GroupRow));
     } catch (error) {
       throw new Error(`Error al listar grupos activos: ${error}`);
     }
@@ -76,10 +72,10 @@ export class GroupRepositoryImpl implements IGroupRepository {
   async findByTeacher(teacherId: number): Promise<Group[]> {
     try {
       const result = await db.query(
-        "SELECT * FROM grupos WHERE profesor_id = $1 ORDER BY fecha DESC, id",
+        "SELECT * FROM grupos WHERE profesor_id = ? ORDER BY fecha DESC, id",
         [teacherId]
       );
-      return result.rows.map((row:GroupRow) => mapRowToGroup(row as GroupRow));
+      return result.rows.map((row) => mapRowToGroup(row as GroupRow));
     } catch (error) {
       throw new Error(`Error al buscar grupos del profesor: ${error}`);
     }
@@ -90,11 +86,11 @@ export class GroupRepositoryImpl implements IGroupRepository {
       const result = await db.query(
         `SELECT g.* FROM grupos g
          INNER JOIN grupo_usuarios gu ON g.id = gu.grupo_id
-         WHERE gu.usuario_id = $1
+         WHERE gu.usuario_id = ?
          ORDER BY g.fecha DESC, g.id`,
         [studentId]
       );
-      return result.rows.map((row:GroupRow) => mapRowToGroup(row as GroupRow));
+      return result.rows.map((row) => mapRowToGroup(row as GroupRow));
     } catch (error) {
       throw new Error(`Error al buscar grupos del alumno: ${error}`);
     }
@@ -118,8 +114,7 @@ export class GroupRepositoryImpl implements IGroupRepository {
         `INSERT INTO grupos (
           nombre, materia, descripcion, profesor_id, nombre_profesor,
           fecha, codigo_acceso, estado, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
-        RETURNING *`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
         [
           name,
           subject,
@@ -131,7 +126,11 @@ export class GroupRepositoryImpl implements IGroupRepository {
           status,
         ]
       );
-      return mapRowToGroup(result.rows[0] as GroupRow);
+      const insertId = result.insertId;
+      if (insertId == null) throw new Error("Error al obtener ID del grupo");
+      const created = await this.findById(Number(insertId));
+      if (!created) throw new Error("Error al recuperar grupo creado");
+      return created;
     } catch (error) {
       throw new Error(`Error al crear grupo: ${error}`);
     }
@@ -141,26 +140,25 @@ export class GroupRepositoryImpl implements IGroupRepository {
     try {
       const fields: string[] = [];
       const values: unknown[] = [];
-      let index = 1;
 
       if (data.name !== undefined) {
-        fields.push(`nombre = $${index++}`);
+        fields.push("nombre = ?");
         values.push(data.name);
       }
       if (data.subject !== undefined) {
-        fields.push(`materia = $${index++}`);
+        fields.push("materia = ?");
         values.push(data.subject);
       }
       if (data.description !== undefined) {
-        fields.push(`descripcion = $${index++}`);
+        fields.push("descripcion = ?");
         values.push(data.description);
       }
       if (data.date !== undefined) {
-        fields.push(`fecha = $${index++}`);
+        fields.push("fecha = ?");
         values.push(data.date);
       }
       if (data.status !== undefined) {
-        fields.push(`estado = $${index++}`);
+        fields.push("estado = ?");
         values.push(data.status);
       }
 
@@ -171,12 +169,11 @@ export class GroupRepositoryImpl implements IGroupRepository {
       fields.push("updated_at = NOW()");
       values.push(id);
 
-      const result = await db.query(
-        `UPDATE grupos SET ${fields.join(", ")} WHERE id = $${index} RETURNING *`,
+      await db.query(
+        `UPDATE grupos SET ${fields.join(", ")} WHERE id = ?`,
         values
       );
-      if (result.rows.length === 0) return null;
-      return mapRowToGroup(result.rows[0] as GroupRow);
+      return this.findById(id);
     } catch (error) {
       throw new Error(`Error al actualizar grupo: ${error}`);
     }
@@ -184,12 +181,9 @@ export class GroupRepositoryImpl implements IGroupRepository {
 
   async delete(id: number): Promise<boolean> {
     try {
-      await db.query("DELETE FROM grupo_usuarios WHERE grupo_id = $1", [id]);
-      const result = await db.query(
-        "DELETE FROM grupos WHERE id = $1 RETURNING id",
-        [id]
-      );
-      return result.rows.length > 0;
+      await db.query("DELETE FROM grupo_usuarios WHERE grupo_id = ?", [id]);
+      const result = await db.query("DELETE FROM grupos WHERE id = ?", [id]);
+      return (result.affectedRows ?? 0) > 0;
     } catch (error) {
       throw new Error(`Error al eliminar grupo: ${error}`);
     }
@@ -198,9 +192,8 @@ export class GroupRepositoryImpl implements IGroupRepository {
   async addStudent(groupId: number, studentId: number): Promise<void> {
     try {
       await db.query(
-        `INSERT INTO grupo_usuarios (grupo_id, usuario_id, joined_at)
-         VALUES ($1, $2, NOW())
-         ON CONFLICT (grupo_id, usuario_id) DO NOTHING`,
+        `INSERT IGNORE INTO grupo_usuarios (grupo_id, usuario_id, joined_at)
+         VALUES (?, ?, NOW())`,
         [groupId, studentId]
       );
     } catch (error) {
@@ -211,7 +204,7 @@ export class GroupRepositoryImpl implements IGroupRepository {
   async removeStudent(groupId: number, studentId: number): Promise<void> {
     try {
       await db.query(
-        "DELETE FROM grupo_usuarios WHERE grupo_id = $1 AND usuario_id = $2",
+        "DELETE FROM grupo_usuarios WHERE grupo_id = ? AND usuario_id = ?",
         [groupId, studentId]
       );
     } catch (error) {
@@ -225,7 +218,7 @@ export class GroupRepositoryImpl implements IGroupRepository {
   ): Promise<boolean> {
     try {
       const result = await db.query(
-        "SELECT 1 FROM grupo_usuarios WHERE grupo_id = $1 AND usuario_id = $2",
+        "SELECT 1 FROM grupo_usuarios WHERE grupo_id = ? AND usuario_id = ?",
         [groupId, studentId]
       );
       return result.rows.length > 0;

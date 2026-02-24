@@ -1,31 +1,52 @@
-import pg from "pg";
 import "dotenv/config";
+import mysql from "mysql2";
 
-const { Pool } = pg;
-
-const pool = new Pool({
+const pool = mysql.createPool({
   host: process.env.DB_HOST ?? "localhost",
-  port: parseInt(process.env.DB_PORT ?? "5432", 10),
+  port: parseInt(process.env.DB_PORT ?? "3306", 10),
   database: process.env.DB_NAME ?? "tutoclass",
-  user: process.env.DB_USER ?? "postgres",
+  user: process.env.DB_USER ?? "root",
   password: process.env.DB_PASSWORD ?? "",
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+  waitForConnections: true,
+  connectionLimit: 20,
+  queueLimit: 0,
+}).promise();
 
+export type QueryResult = {
+  rows: unknown[];
+  insertId?: number | undefined;
+  affectedRows?: number | undefined;
+};
+
+/**
+ * Ejecuta una query. Devuelve { rows } para compatibilidad con el uso en repositorios.
+ * Para INSERT devuelve además insertId; para UPDATE/DELETE, affectedRows.
+ */
 export const db = {
-  query: (text: string, values?: unknown[]) => pool.query(text, values),
+  query: async (
+    sql: string,
+    values?: unknown[]
+  ): Promise<QueryResult> => {
+    const [result] = await pool.execute(sql, (values ?? []) as (string | number | null)[]);
+    if (Array.isArray(result)) {
+      return { rows: result as unknown[] };
+    }
+    const header = result as { insertId?: number; affectedRows?: number };
+    return {
+      rows: [],
+      insertId: header.insertId as number | undefined,
+      affectedRows: header.affectedRows as number | undefined,
+    };
+  },
 };
 
 export { pool };
 
-
 export async function checkConnection(): Promise<boolean> {
   try {
-    const client = await pool.connect();
-    await client.query("SELECT 1");
-    client.release();
+    const conn = await pool.getConnection();
+    await conn.execute("SELECT 1");
+    conn.release();
     return true;
   } catch {
     return false;

@@ -34,10 +34,9 @@ function mapRowToMessage(row: MessageRow): Message {
 export class MessageRepositoryImpl implements IMessageRepository {
   async findById(id: number): Promise<Message | null> {
     try {
-      const result = await db.query(
-        "SELECT * FROM mensajes WHERE id = $1",
-        [id]
-      );
+      const result = await db.query("SELECT * FROM mensajes WHERE id = ?", [
+        id,
+      ]);
       if (result.rows.length === 0) return null;
       return mapRowToMessage(result.rows[0] as MessageRow);
     } catch (error) {
@@ -51,25 +50,23 @@ export class MessageRepositoryImpl implements IMessageRepository {
     from?: Date
   ): Promise<Message[]> {
     try {
-      let query = "SELECT * FROM mensajes WHERE grupo_id = $1";
+      let query = "SELECT * FROM mensajes WHERE grupo_id = ?";
       const values: unknown[] = [groupId];
-      let paramIndex = 2;
 
       if (from != null) {
-        query += ` AND created_at >= $${paramIndex}`;
+        query += " AND created_at >= ?";
         values.push(from);
-        paramIndex++;
       }
 
       query += " ORDER BY created_at ASC";
 
       if (limit != null && limit > 0) {
-        query += ` LIMIT $${paramIndex}`;
+        query += " LIMIT ?";
         values.push(limit);
       }
 
       const result = await db.query(query, values);
-      return result.rows.map((row: MessageRow) => mapRowToMessage(row));
+      return result.rows.map((row) => mapRowToMessage(row as MessageRow));
     } catch (error) {
       throw new Error(`Error al listar mensajes del grupo: ${error}`);
     }
@@ -84,11 +81,14 @@ export class MessageRepositoryImpl implements IMessageRepository {
         `INSERT INTO mensajes (
           grupo_id, usuario_id, nombre_usuario, rol_usuario, texto, tipo,
           created_at, edited, edited_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), false, NOW())
-        RETURNING *`,
+        ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 0, NOW())`,
         [groupId, userId, userName, userRole, text, type]
       );
-      return mapRowToMessage(result.rows[0] as MessageRow);
+      const insertId = result.insertId;
+      if (insertId == null) throw new Error("Error al obtener ID del mensaje");
+      const created = await this.findById(Number(insertId));
+      if (!created) throw new Error("Error al recuperar mensaje creado");
+      return created;
     } catch (error) {
       throw new Error(`Error al crear mensaje: ${error}`);
     }
@@ -96,15 +96,13 @@ export class MessageRepositoryImpl implements IMessageRepository {
 
   async update(id: number, text: string): Promise<Message | null> {
     try {
-      const result = await db.query(
+      await db.query(
         `UPDATE mensajes
-         SET texto = $1, edited = true, edited_at = NOW()
-         WHERE id = $2
-         RETURNING *`,
+         SET texto = ?, edited = 1, edited_at = NOW()
+         WHERE id = ?`,
         [text, id]
       );
-      if (result.rows.length === 0) return null;
-      return mapRowToMessage(result.rows[0] as MessageRow);
+      return this.findById(id);
     } catch (error) {
       throw new Error(`Error al actualizar mensaje: ${error}`);
     }
@@ -112,11 +110,8 @@ export class MessageRepositoryImpl implements IMessageRepository {
 
   async delete(id: number): Promise<boolean> {
     try {
-      const result = await db.query(
-        "DELETE FROM mensajes WHERE id = $1 RETURNING id",
-        [id]
-      );
-      return result.rows.length > 0;
+      const result = await db.query("DELETE FROM mensajes WHERE id = ?", [id]);
+      return (result.affectedRows ?? 0) > 0;
     } catch (error) {
       throw new Error(`Error al eliminar mensaje: ${error}`);
     }
