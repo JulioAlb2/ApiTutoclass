@@ -79,4 +79,21 @@ export class TokenService {
       );
     }
   }
+
+  verifyRefreshToken(token: string): DecodedToken {
+    try {
+      const decoded = jwt.verify(token, this.refreshSecret) as DecodedToken;
+      return decoded;
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new Error("Refresh token expirado");
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new Error("Refresh token inválido");
+      }
+      throw new Error(
+        `Error al verificar refresh token: ${getErrorMessage(error)}`,
+      );
+    }
+  }
 }
