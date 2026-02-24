@@ -28,3 +28,50 @@ export const authConfig: AuthConfig = {
   }
 };
 
+export interface RegisterAlumnoDTO {
+  nombre: string;
+  email: string;
+  password: string;
+  rol: 'alumno';
+}
+
+export interface Tokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RegisterMaestroDTO {
+  nombre: string;
+  email: string;
+  password: string;
+  rol: 'maestro';
+  materias?: string[];
+}
+
+export interface LoginDTO {
+  email: string;
+  password: string;
+}
+
+export interface RefreshTokenDTO {
+  refreshToken: string;
+}
+
+export interface AuthResponse {
+  user: {
+    id: number;
+    nombre: string;
+    email: string;
+    rol: string;
+  };
+  tokens: Tokens;
+}
+
+export interface UserProfile {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: string;
+  createdAt: Date;
+}
+
