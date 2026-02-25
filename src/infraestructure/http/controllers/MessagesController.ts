@@ -3,6 +3,7 @@ import type { IMessageRepository } from "../../../domain/interfaces/IMessageRepo
 import type { CreateMessageUseCase } from "../../../usecases/messages/CreateMessageUseCase";
 import type { UpdateMessageUseCase } from "../../../usecases/messages/UpdateMessageUseCase";
 import type { DeleteMessageUseCase } from "../../../usecases/messages/DeleteMessageUseCase";
+import { MessageType } from "../../../domain/enums/messages.enum";
 
 export class MessagesController {
   constructor(
@@ -72,7 +73,7 @@ export class MessagesController {
         userName: body.userName ?? user.email,
         userRole: user.rol,
         text: body.text,
-        type: body.type,
+        type: body.type === "sistema" ? MessageType.SISTEMA : MessageType.TEXTO,
       });
       res.status(201).json(data);
     } catch (err) {

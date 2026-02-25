@@ -8,7 +8,7 @@ export interface CreateMessageInput {
   userName: string;
   userRole: string;
   text: string;
-  type?: MessageType;
+  type: MessageType;
 }
 
 export class CreateMessageUseCase {
