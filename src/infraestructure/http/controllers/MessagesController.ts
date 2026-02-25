@@ -74,7 +74,7 @@ export class MessagesController {
         userRole: user.rol,
         text: body.text,
         type: body.type === "sistema" ? MessageType.SISTEMA : MessageType.TEXTO,
-      });
+        });
       res.status(201).json(data);
     } catch (err) {
       next(err);
