@@ -118,6 +118,8 @@ npm start
 
 Por defecto el servidor queda en **http://localhost:3000** (o en el `PORT` de `.env`).
 
+**Documentación interactiva (Swagger):** [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+
 ---
 
 ## API – Resumen de endpoints

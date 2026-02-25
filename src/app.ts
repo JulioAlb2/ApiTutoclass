@@ -3,8 +3,10 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import swaggerUi from "swagger-ui-express";
 
 import { authConfig } from "./infraestructure/http/configure/auth.config";
+import { swaggerSpec } from "./infraestructure/http/services/swagger/spec";
 import { createRoutes } from "./infraestructure/http/routes";
 import { errorHandler } from "./infraestructure/http/middleware/error.middleware";
 
@@ -41,6 +43,9 @@ app.use(helmet());
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
+
+// Documentación API (Swagger)
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Repositorios
 const userRepository = new UserRepositoryImpl();
