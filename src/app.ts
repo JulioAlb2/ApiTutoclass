@@ -6,7 +6,7 @@ import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
 
 import { authConfig } from "./infraestructure/http/configure/auth.config";
-import { swaggerSpec } from "./infraestructure/http/services/swagger/spec";
+import { swaggerSpec } from "./infraestructure/http/swagger/spec";
 import { createRoutes } from "./infraestructure/http/routes";
 import { errorHandler } from "./infraestructure/http/middleware/error.middleware";
 
@@ -19,7 +19,6 @@ import { TokenService } from "./infraestructure/http/services/TokenService";
 import { RegisterAlumnoUseCase } from "./usecases/auth/RegisterAlumnoUseCase";
 import { RegisterMaestroUseCase } from "./usecases/auth/RegisterMaestroUseCase";
 import { LoginUseCase } from "./usecases/auth/LoginUseCase";
-import { RefreshTokenUseCase } from "./usecases/auth/RefreshTokenUseCase";
 import { GetProfileUseCase } from "./usecases/auth/GetProfileUseCase";
 
 import { CreateGroupUseCase } from "./usecases/groups/CreateGroupUseCase";
@@ -72,10 +71,6 @@ const loginUseCase = new LoginUseCase(
   hashService,
   tokenService
 );
-const refreshTokenUseCase = new RefreshTokenUseCase(
-  userRepository,
-  tokenService
-);
 const getProfileUseCase = new GetProfileUseCase(userRepository);
 
 // Casos de uso - Grupos
@@ -95,7 +90,6 @@ const authController = new AuthController(
   registerAlumnoUseCase,
   registerMaestroUseCase,
   loginUseCase,
-  refreshTokenUseCase,
   getProfileUseCase
 );
 const groupsController = new GroupsController(

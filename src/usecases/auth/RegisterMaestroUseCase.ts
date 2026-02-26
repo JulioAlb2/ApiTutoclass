@@ -25,7 +25,7 @@ export class RegisterMaestroUseCase {
       role: Role.MAESTRO,
     });
 
-    const tokens = this.tokenService.generateTokens({
+    const token = this.tokenService.generateToken({
       id: user.id,
       email: user.email,
       rol: user.role,
@@ -38,7 +38,7 @@ export class RegisterMaestroUseCase {
         email: user.email,
         rol: user.role,
       },
-      tokens,
+      token,
     };
   }
 }

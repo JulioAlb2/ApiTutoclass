@@ -190,6 +190,3 @@ La comprobación de rol se hace en middleware (`requireRole("maestro")` o `requi
 
 ---
 
-## Licencia
-
-ISC.

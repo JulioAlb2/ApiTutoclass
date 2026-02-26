@@ -21,7 +21,7 @@ export class LoginUseCase {
       throw new Error("Credenciales inválidas");
     }
 
-    const tokens = this.tokenService.generateTokens({
+    const token = this.tokenService.generateToken({
       id: user.id,
       email: user.email,
       rol: user.role,
@@ -34,7 +34,7 @@ export class LoginUseCase {
         email: user.email,
         rol: user.role,
       },
-      tokens,
+      token,
     };
   }
 }

@@ -14,7 +14,7 @@ export function authMiddleware(tokenService: TokenService) {
     }
 
     try {
-      req.user = tokenService.verifyAccessToken(token);
+      req.user = tokenService.verifyToken(token);
       next();
     } catch {
       res.status(401).json({ error: "Token inválido o expirado" });

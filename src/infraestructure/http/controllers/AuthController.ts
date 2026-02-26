@@ -2,13 +2,11 @@ import type { Request, Response, NextFunction } from "express";
 import type { RegisterAlumnoUseCase } from "../../../usecases/auth/RegisterAlumnoUseCase";
 import type { RegisterMaestroUseCase } from "../../../usecases/auth/RegisterMaestroUseCase";
 import type { LoginUseCase } from "../../../usecases/auth/LoginUseCase";
-import type { RefreshTokenUseCase } from "../../../usecases/auth/RefreshTokenUseCase";
 import type { GetProfileUseCase } from "../../../usecases/auth/GetProfileUseCase";
 import type {
   RegisterAlumnoDTO,
   RegisterMaestroDTO,
   LoginDTO,
-  RefreshTokenDTO,
 } from "../configure/auth.config";
 
 export class AuthController {
@@ -16,7 +14,6 @@ export class AuthController {
     private readonly registerAlumno: RegisterAlumnoUseCase,
     private readonly registerMaestro: RegisterMaestroUseCase,
     private readonly login: LoginUseCase,
-    private readonly refreshToken: RefreshTokenUseCase,
     private readonly getProfile: GetProfileUseCase
   ) {}
 
@@ -55,19 +52,6 @@ export class AuthController {
   ): Promise<void> => {
     try {
       const data = await this.login.execute(req.body);
-      res.json(data);
-    } catch (err) {
-      next(err);
-    }
-  };
-
-  refreshHandler = async (
-    req: Request<object, object, RefreshTokenDTO>,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const data = await this.refreshToken.execute(req.body);
       res.json(data);
     } catch (err) {
       next(err);
