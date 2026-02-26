@@ -64,7 +64,7 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = (req as any).user!.id;
       const data = await this.getProfile.execute(userId);
       res.json(data);
     } catch (err) {

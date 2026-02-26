@@ -13,6 +13,8 @@ import { errorHandler } from "./infraestructure/http/middleware/error.middleware
 import { UserRepositoryImpl } from "./infraestructure/http/repositories/UserRepositoryImpl";
 import { GroupRepositoryImpl } from "./infraestructure/http/repositories/GroupRepositoryImpl";
 import { MessageRepositoryImpl } from "./infraestructure/http/repositories/MessageRepositoryImpl";
+import { TaskRepositoryImpl } from "./infraestructure/http/repositories/TaskRepositoryImpl";
+import { SubmissionRepositoryImpl } from "./infraestructure/http/repositories/SubmissionRepositoryImpl";
 import { HashService } from "./infraestructure/http/services/HashService";
 import { TokenService } from "./infraestructure/http/services/TokenService";
 
@@ -31,9 +33,20 @@ import { CreateMessageUseCase } from "./usecases/messages/CreateMessageUseCase";
 import { UpdateMessageUseCase } from "./usecases/messages/UpdateMessageUseCase";
 import { DeleteMessageUseCase } from "./usecases/messages/DeleteMessageUseCase";
 
+import { CreateTaskUseCase } from "./usecases/tasks/CreateTaskUseCase";
+import { UpdateTaskUseCase } from "./usecases/tasks/UpdateTaskUseCase";
+import { DeleteTaskUseCase } from "./usecases/tasks/DeleteTaskUseCase";
+import { GetTasksByGroupUseCase } from "./usecases/tasks/GetTasksByGroupUseCase";
+
+import { SubmitTaskUseCase } from "./usecases/submissions/SubmitTaskUseCase";
+import { GradeSubmissionUseCase } from "./usecases/submissions/GradeSubmissionUseCase";
+import { GetSubmissionsByTaskUseCase } from "./usecases/submissions/GetSubmissionsByTaskUseCase";
+
 import { AuthController } from "./infraestructure/http/controllers/AuthController";
 import { GroupsController } from "./infraestructure/http/controllers/GroupsController";
 import { MessagesController } from "./infraestructure/http/controllers/MessagesController";
+import { TasksController } from "./infraestructure/http/controllers/TasksController";
+import { SubmissionsController } from "./infraestructure/http/controllers/SubmissionsController";
 
 const app = express();
 
@@ -50,6 +63,8 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const userRepository = new UserRepositoryImpl();
 const groupRepository = new GroupRepositoryImpl();
 const messageRepository = new MessageRepositoryImpl();
+const taskRepository = new TaskRepositoryImpl();
+const submissionRepository = new SubmissionRepositoryImpl();
 
 // Servicios
 const hashService = new HashService(authConfig.bcrypt.saltRounds);
@@ -85,6 +100,17 @@ const createMessageUseCase = new CreateMessageUseCase(messageRepository);
 const updateMessageUseCase = new UpdateMessageUseCase(messageRepository);
 const deleteMessageUseCase = new DeleteMessageUseCase(messageRepository);
 
+// Casos de uso - Tareas
+const createTaskUseCase = new CreateTaskUseCase(taskRepository);
+const updateTaskUseCase = new UpdateTaskUseCase(taskRepository);
+const deleteTaskUseCase = new DeleteTaskUseCase(taskRepository);
+const getTasksByGroupUseCase = new GetTasksByGroupUseCase(taskRepository);
+
+// Casos de uso - Entregas
+const submitTaskUseCase = new SubmitTaskUseCase(submissionRepository);
+const gradeSubmissionUseCase = new GradeSubmissionUseCase(submissionRepository);
+const getSubmissionsByTaskUseCase = new GetSubmissionsByTaskUseCase(submissionRepository);
+
 // Controladores
 const authController = new AuthController(
   registerAlumnoUseCase,
@@ -106,13 +132,28 @@ const messagesController = new MessagesController(
   updateMessageUseCase,
   deleteMessageUseCase
 );
+const tasksController = new TasksController(
+  taskRepository,
+  createTaskUseCase,
+  updateTaskUseCase,
+  deleteTaskUseCase,
+  getTasksByGroupUseCase
+);
+const submissionsController = new SubmissionsController(
+  submissionRepository,
+  submitTaskUseCase,
+  gradeSubmissionUseCase,
+  getSubmissionsByTaskUseCase
+);
 
 // Rutas
 const router = createRoutes(
   tokenService,
   authController,
   groupsController,
-  messagesController
+  messagesController,
+  tasksController,
+  submissionsController
 );
 app.use(router);
 
