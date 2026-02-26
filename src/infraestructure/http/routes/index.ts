@@ -18,7 +18,6 @@ export function createRoutes(
   router.post("/auth/register/alumno", authController.registerAlumnoHandler);
   router.post("/auth/register/maestro", authController.registerMaestroHandler);
   router.post("/auth/login", authController.loginHandler);
-  router.post("/auth/refresh", authController.refreshHandler);
 
   // Auth (protegida)
   router.get("/auth/profile", auth, authController.getProfileHandler);
