@@ -8,7 +8,12 @@ export function errorHandler(
 ): void {
   const message = err.message;
 
-  if (message === "Token no proporcionado" || message === "Token inválido o expirado" || message === "Access token expirado" || message === "Access token inválido") {
+  if (
+    message === "Token no proporcionado" ||
+    message === "Token inválido o expirado" ||
+    message === "Token expirado" ||
+    message === "Token inválido"
+  ) {
     res.status(401).json({ error: message });
     return;
   }
@@ -27,8 +32,6 @@ export function errorHandler(
   if (
     message === "El email ya está registrado" ||
     message === "Credenciales inválidas" ||
-    message === "Refresh token expirado" ||
-    message === "Refresh token inválido" ||
     message === "Código de acceso inválido" ||
     message === "El grupo no está activo" ||
     message === "Ya estás inscrito en este grupo" ||
@@ -40,5 +43,6 @@ export function errorHandler(
     return;
   }
 
+  console.error("[500]", err);
   res.status(500).json({ error: "Error interno del servidor" });
 }
