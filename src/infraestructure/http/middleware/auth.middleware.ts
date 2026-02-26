@@ -14,8 +14,7 @@ export function authMiddleware(tokenService: TokenService) {
     }
 
     try {
-      // Cambio aquí: agregamos el (req as any)
-      (req as any).user = tokenService.verifyToken(token);
+      req.user = tokenService.verifyToken(token);
       next();
     } catch {
       res.status(401).json({ error: "Token inválido o expirado" });
@@ -25,13 +24,11 @@ export function authMiddleware(tokenService: TokenService) {
 
 export function requireRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    // Cambio aquí: agregamos el (req as any)
-    const user = (req as any).user;
-    if (!user) {
+    if (!req.user) {
       res.status(401).json({ error: "No autenticado" });
       return;
     }
-    if (!roles.includes(user.rol)) {
+    if (!roles.includes(req.user.rol)) {
       res.status(403).json({ error: "Sin permiso para esta acción" });
       return;
     }

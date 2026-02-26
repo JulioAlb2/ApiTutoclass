@@ -6,7 +6,7 @@ import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
 
 import { authConfig } from "./infraestructure/http/configure/auth.config";
-import { swaggerSpec } from "./infraestructure/http/swagger/spec";
+import { swaggerSpec } from "./infraestructure/http/services/swagger/spec";
 import { createRoutes } from "./infraestructure/http/routes";
 import { errorHandler } from "./infraestructure/http/middleware/error.middleware";
 
