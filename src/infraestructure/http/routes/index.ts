@@ -36,6 +36,9 @@ export function createRoutes(
   router.post("/groups/:id/leave", auth, requireRole("alumno"), groupsController.leave);
   router.get("/groups/:id/enrolled", auth, groupsController.isEnrolled);
 
+  // Mensajes (SSE - eventos en tiempo real)
+  router.get("/groups/:groupId/events", messagesController.subscribe);
+
   // Mensajes (lecturas)
   router.get("/groups/:groupId/messages", messagesController.getByGroup);
   router.get("/messages/:id", messagesController.getById);

@@ -1,0 +1,191 @@
+### ============================================
+### Variables globales
+### ============================================
+
+@baseUrl = http://localhost:3000
+@tokenMaestro = TU_TOKEN_MAESTRO_AQUI
+@tokenAlumno = TU_TOKEN_ALUMNO_AQUI
+
+
+### ============================================
+### AUTH - Registro y Login
+### ============================================
+
+### Registrar un alumno
+POST {{baseUrl}}/auth/register/alumno
+Content-Type: application/json
+
+{
+  "nombre": "Carlos López",
+  "email": "carlos@correo.com",
+  "password": "123456"
+}
+
+### Registrar un maestro
+POST {{baseUrl}}/auth/register/maestro
+Content-Type: application/json
+
+{
+  "nombre": "María García",
+  "email": "maria@correo.com",
+  "password": "123456",
+  "materias": ["Matemáticas", "Física"]
+}
+
+### Login (usa el email y password que registraste)
+# Copia el "token" de la respuesta y pégalo arriba en @tokenMaestro o @tokenAlumno
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "maria@correo.com",
+  "password": "123456"
+}
+
+### Login como alumno
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "carlos@correo.com",
+  "password": "123456"
+}
+
+### Obtener perfil del usuario autenticado
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{tokenMaestro}}
+
+
+### ============================================
+### GRUPOS - Rutas públicas (sin token)
+### ============================================
+
+### Listar grupos activos
+GET {{baseUrl}}/groups
+
+### Obtener grupo por ID
+GET {{baseUrl}}/groups/1
+
+### Grupos de un profesor (teacherId = 1)
+GET {{baseUrl}}/groups/teacher/1
+
+### Grupos de un alumno (studentId = 2)
+GET {{baseUrl}}/groups/student/2
+
+
+### ============================================
+### GRUPOS - Rutas protegidas (requieren token)
+### ============================================
+
+### Crear grupo (solo maestro)
+POST {{baseUrl}}/groups
+Content-Type: application/json
+Authorization: Bearer {{tokenMaestro}}
+
+{
+  "name": "Grupo de Matemáticas",
+  "subject": "Matemáticas",
+  "description": "Grupo para el semestre 2026-1",
+  "teacherName": "María García",
+  "date": "2026-03-01T08:00:00.000Z",
+  "accessCode": "MAT2026",
+  "status": "activa"
+}
+
+### Actualizar grupo (solo maestro)
+PATCH {{baseUrl}}/groups/1
+Content-Type: application/json
+Authorization: Bearer {{tokenMaestro}}
+
+{
+  "name": "Grupo de Matemáticas Avanzadas",
+  "description": "Descripción actualizada"
+}
+
+### Unirse a un grupo con código de acceso (solo alumno)
+POST {{baseUrl}}/groups/join
+Content-Type: application/json
+Authorization: Bearer {{tokenAlumno}}
+
+{
+  "accessCode": "MAT2026"
+}
+
+### Verificar si el usuario está inscrito en un grupo
+GET {{baseUrl}}/groups/1/enrolled
+Authorization: Bearer {{tokenAlumno}}
+
+### Salir de un grupo (solo alumno)
+POST {{baseUrl}}/groups/1/leave
+Authorization: Bearer {{tokenAlumno}}
+
+### Eliminar grupo (solo maestro)
+DELETE {{baseUrl}}/groups/1
+Authorization: Bearer {{tokenMaestro}}
+
+
+### ============================================
+### SSE - Eventos en tiempo real
+### ============================================
+
+### Suscribirse a eventos del grupo 1 (abre un stream)
+### Recibirás eventos: message_created, message_updated, message_deleted
+### NOTA: Esta conexión se mantiene abierta. Prueba crear/editar/eliminar
+###       un mensaje en otra pestaña y verás los eventos llegar aquí.
+GET {{baseUrl}}/groups/1/events
+
+
+### ============================================
+### MENSAJES - Rutas públicas
+### ============================================
+
+### Mensajes de un grupo
+GET {{baseUrl}}/groups/1/messages
+
+### Mensajes de un grupo con límite
+GET {{baseUrl}}/groups/1/messages?limit=10
+
+### Obtener un mensaje por ID
+GET {{baseUrl}}/messages/1
+
+
+### ============================================
+### MENSAJES - Rutas protegidas
+### ============================================
+
+### Crear mensaje en un grupo
+POST {{baseUrl}}/messages
+Content-Type: application/json
+Authorization: Bearer {{tokenAlumno}}
+
+{
+  "groupId": 1,
+  "userName": "Carlos López",
+  "text": "Hola a todos, ¿cuándo es el primer examen?",
+  "type": "texto"
+}
+
+### Crear mensaje de tipo sistema
+POST {{baseUrl}}/messages
+Content-Type: application/json
+Authorization: Bearer {{tokenMaestro}}
+
+{
+  "groupId": 1,
+  "userName": "María García",
+  "text": "Se ha publicado el temario del curso",
+  "type": "sistema"
+}
+
+### Editar un mensaje
+PATCH {{baseUrl}}/messages/1
+Content-Type: application/json
+Authorization: Bearer {{tokenAlumno}}
+
+{
+  "text": "Hola, ¿cuándo es el primer examen parcial?"
+}
+
+### Eliminar un mensaje
+DELETE {{baseUrl}}/messages/1
+Authorization: Bearer {{tokenAlumno}}

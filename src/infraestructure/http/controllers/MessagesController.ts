@@ -3,6 +3,7 @@ import type { IMessageRepository } from "../../../domain/interfaces/IMessageRepo
 import type { CreateMessageUseCase } from "../../../usecases/messages/CreateMessageUseCase";
 import type { UpdateMessageUseCase } from "../../../usecases/messages/UpdateMessageUseCase";
 import type { DeleteMessageUseCase } from "../../../usecases/messages/DeleteMessageUseCase";
+import type { SSEManager } from "../services/SSEManager";
 import { MessageType } from "../../../domain/enums/messages.enum";
 
 export class MessagesController {
@@ -10,8 +11,27 @@ export class MessagesController {
     private readonly messageRepository: IMessageRepository,
     private readonly createMessage: CreateMessageUseCase,
     private readonly updateMessage: UpdateMessageUseCase,
-    private readonly deleteMessage: DeleteMessageUseCase
+    private readonly deleteMessage: DeleteMessageUseCase,
+    private readonly sse: SSEManager
   ) {}
+
+  subscribe = (
+    req: Request<{ groupId: string }>,
+    res: Response,
+    next: NextFunction
+  ): void => {
+    try {
+      const groupId = parseInt(req.params.groupId, 10);
+      if (Number.isNaN(groupId)) {
+        res.status(400).json({ error: "ID de grupo inválido" });
+        return;
+      }
+      const clientId = `${groupId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      this.sse.addClient(groupId, clientId, res);
+    } catch (err) {
+      next(err);
+    }
+  };
 
   getById = async (
     req: Request<{ id: string }>,
@@ -75,6 +95,7 @@ export class MessagesController {
         text: body.text,
         type: body.type === "sistema" ? MessageType.SISTEMA : MessageType.TEXTO,
         });
+      this.sse.broadcast(body.groupId, { type: "message_created", data });
       res.status(201).json(data);
     } catch (err) {
       next(err);
@@ -94,6 +115,9 @@ export class MessagesController {
       }
       const { text } = req.body;
       const data = await this.updateMessage.execute(id, text);
+      if (data) {
+        this.sse.broadcast(data.groupId, { type: "message_updated", data });
+      }
       res.json(data);
     } catch (err) {
       next(err);
@@ -111,7 +135,11 @@ export class MessagesController {
         res.status(400).json({ error: "ID inválido" });
         return;
       }
+      const existing = await this.messageRepository.findById(id);
       await this.deleteMessage.execute(id);
+      if (existing) {
+        this.sse.broadcast(existing.groupId, { type: "message_deleted", data: { id } });
+      }
       res.status(204).send();
     } catch (err) {
       next(err);

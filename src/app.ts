@@ -15,6 +15,7 @@ import { GroupRepositoryImpl } from "./infraestructure/http/repositories/GroupRe
 import { MessageRepositoryImpl } from "./infraestructure/http/repositories/MessageRepositoryImpl";
 import { HashService } from "./infraestructure/http/services/HashService";
 import { TokenService } from "./infraestructure/http/services/TokenService";
+import { SSEManager } from "./infraestructure/http/services/SSEManager";
 
 import { RegisterAlumnoUseCase } from "./usecases/auth/RegisterAlumnoUseCase";
 import { RegisterMaestroUseCase } from "./usecases/auth/RegisterMaestroUseCase";
@@ -54,6 +55,7 @@ const messageRepository = new MessageRepositoryImpl();
 // Servicios
 const hashService = new HashService(authConfig.bcrypt.saltRounds);
 const tokenService = new TokenService();
+const sseManager = new SSEManager();
 
 // Casos de uso - Auth
 const registerAlumnoUseCase = new RegisterAlumnoUseCase(
@@ -104,7 +106,8 @@ const messagesController = new MessagesController(
   messageRepository,
   createMessageUseCase,
   updateMessageUseCase,
-  deleteMessageUseCase
+  deleteMessageUseCase,
+  sseManager
 );
 
 // Rutas

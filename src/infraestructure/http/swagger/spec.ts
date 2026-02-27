@@ -437,6 +437,22 @@ export const swaggerSpec = {
         },
       },
     },
+    "/groups/{groupId}/events": {
+      get: {
+        tags: ["Mensajes"],
+        summary: "SSE — Eventos en tiempo real de un grupo",
+        description: "Abre una conexión Server-Sent Events. El servidor envía eventos `message_created`, `message_updated` y `message_deleted` cada vez que un mensaje cambia en el grupo.",
+        parameters: [
+          { name: "groupId", in: "path", required: true, schema: { type: "integer" } },
+        ],
+        responses: {
+          200: {
+            description: "Stream de eventos (text/event-stream)",
+            content: { "text/event-stream": { schema: { type: "string" } } }
+          },
+        },
+      },
+    },
     "/groups/{groupId}/messages": {
       get: {
         tags: ["Mensajes"],
