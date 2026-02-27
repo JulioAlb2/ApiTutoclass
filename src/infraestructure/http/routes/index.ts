@@ -3,13 +3,17 @@ import { authMiddleware, requireRole } from "../middleware/auth.middleware";
 import type { AuthController } from "../controllers/AuthController";
 import type { GroupsController } from "../controllers/GroupsController";
 import type { MessagesController } from "../controllers/MessagesController";
+import type { TasksController } from "../controllers/TasksController";
+import type { SubmissionsController } from "../controllers/SubmissionsController";
 import type { TokenService } from "../services/TokenService";
 
 export function createRoutes(
   tokenService: TokenService,
   authController: AuthController,
   groupsController: GroupsController,
-  messagesController: MessagesController
+  messagesController: MessagesController,
+  tasksController: TasksController,
+  submissionsController: SubmissionsController
 ): Router {
   const auth = authMiddleware(tokenService);
   const router = Router();
@@ -44,6 +48,17 @@ export function createRoutes(
   router.post("/messages", auth, messagesController.create);
   router.patch("/messages/:id", auth, messagesController.update);
   router.delete("/messages/:id", auth, messagesController.remove);
+
+  // Tareas (protegidas)
+  router.post("/tasks", auth, requireRole("maestro"), tasksController.create);
+  router.get("/tasks/group/:groupId", auth, tasksController.getByGroup);
+  router.patch("/tasks/:id", auth, requireRole("maestro"), tasksController.update);
+  router.delete("/tasks/:id", auth, requireRole("maestro"), tasksController.delete);
+
+  // Entregas (protegidas)
+  router.post("/submissions", auth, requireRole("alumno"), submissionsController.submit);
+  router.get("/submissions/task/:taskId", auth, submissionsController.getByTask);
+  router.patch("/submissions/:id/grade", auth, requireRole("maestro"), submissionsController.grade);
 
   return router;
 }

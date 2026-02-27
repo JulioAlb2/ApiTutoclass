@@ -42,7 +42,9 @@ export function errorHandler(
     res.status(400).json({ error: message });
     return;
   }
-
+  
+  console.error("[ERROR HANDLER] Error desconocido:", err.message);
+  console.error("[ERROR HANDLER] Stack:", err.stack);
   console.error("[500]", err);
   res.status(500).json({ error: "Error interno del servidor" });
 }
