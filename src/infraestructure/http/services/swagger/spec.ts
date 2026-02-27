@@ -82,6 +82,33 @@ export const swaggerSpec = {
           editedAt: { type: "string", format: "date-time" },
         },
       },
+      Task: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          title: { type: "string" },
+          description: { type: "string" },
+          groupId: { type: "integer" },
+          assignedBy: { type: "integer" },
+          dueDate: { type: "string", format: "date-time" },
+          status: { type: "string", enum: ["pendiente", "en_progreso", "completada", "vencida"] },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+        },
+      },
+      Submission: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          taskId: { type: "integer" },
+          studentId: { type: "integer" },
+          fileName: { type: "string" },
+          filePath: { type: "string" },
+          submittedAt: { type: "string", format: "date-time" },
+          grade: { type: "number", nullable: true },
+          feedback: { type: "string", nullable: true },
+        },
+      },
     },
   },
   paths: {
@@ -591,6 +618,233 @@ export const swaggerSpec = {
           },
           401: {
             description: "No autenticado",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+        },
+      },
+    },
+    "/tasks": {
+      post: {
+        tags: ["Tareas"],
+        summary: "Crear tarea",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["title", "groupId", "assignedBy", "dueDate"],
+                properties: {
+                  title: { type: "string" },
+                  description: { type: "string" },
+                  groupId: { type: "integer" },
+                  assignedBy: { type: "integer" },
+                  dueDate: { type: "string", format: "date-time" },
+                  status: { type: "string", enum: ["pendiente", "en_progreso", "completada", "vencida"] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Tarea creada",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Task" } } }
+          },
+          401: {
+            description: "No autenticado",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+        },
+      },
+    },
+    "/tasks/group/{groupId}": {
+      get: {
+        tags: ["Tareas"],
+        summary: "Obtener tareas de un grupo",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "groupId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Lista de tareas",
+            content: {
+              "application/json": {
+                schema: { type: "array", items: { $ref: "#/components/schemas/Task" } }
+              }
+            }
+          },
+          401: {
+            description: "No autenticado",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+        },
+      },
+    },
+    "/tasks/{id}": {
+      patch: {
+        tags: ["Tareas"],
+        summary: "Actualizar tarea",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  description: { type: "string" },
+                  dueDate: { type: "string", format: "date-time" },
+                  status: { type: "string", enum: ["pendiente", "en_progreso", "completada", "vencida"] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Tarea actualizada",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Task" } } }
+          },
+          404: {
+            description: "Tarea no encontrada",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+        },
+      },
+      delete: {
+        tags: ["Tareas"],
+        summary: "Eliminar tarea",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        responses: {
+          204: { description: "Tarea eliminada" },
+          404: {
+            description: "Tarea no encontrada",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+        },
+      },
+    },
+    "/submissions": {
+      post: {
+        tags: ["Entregas"],
+        summary: "Subir entrega de tarea",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                required: ["taskId", "studentId", "file"],
+                properties: {
+                  taskId: { type: "integer" },
+                  studentId: { type: "integer" },
+                  file: { type: "string", format: "binary" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: "Entrega subida",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Submission" } } }
+          },
+          400: {
+            description: "Archivo requerido",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+        },
+      },
+    },
+    "/submissions/task/{taskId}": {
+      get: {
+        tags: ["Entregas"],
+        summary: "Obtener entregas de una tarea",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "taskId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Lista de entregas",
+            content: {
+              "application/json": {
+                schema: { type: "array", items: { $ref: "#/components/schemas/Submission" } }
+              }
+            }
+          },
+          401: {
+            description: "No autenticado",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+        },
+      },
+    },
+    "/submissions/{id}/grade": {
+      patch: {
+        tags: ["Entregas"],
+        summary: "Calificar entrega",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  grade: { type: "number" },
+                  feedback: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Entrega calificada",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Submission" } } }
+          },
+          404: {
+            description: "Entrega no encontrada",
             content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
           },
         },
