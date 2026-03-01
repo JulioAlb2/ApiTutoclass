@@ -111,6 +111,10 @@ Authorization: Bearer {{tokenAlumno}}
   "accessCode": "MAT2026"
 }
 
+### Ver alumnos inscritos en un grupo
+GET {{baseUrl}}/groups/1/students
+Authorization: Bearer {{tokenMaestro}}
+
 ### Verificar si el usuario está inscrito en un grupo
 GET {{baseUrl}}/groups/1/enrolled
 Authorization: Bearer {{tokenAlumno}}

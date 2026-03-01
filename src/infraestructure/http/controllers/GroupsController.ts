@@ -203,6 +203,29 @@ export class GroupsController {
     }
   };
 
+  getStudents = async (
+    req: Request<{ id: string }>,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const groupId = parseInt(req.params.id, 10);
+      if (Number.isNaN(groupId)) {
+        res.status(400).json({ error: "ID inválido" });
+        return;
+      }
+      const group = await this.groupRepository.findById(groupId);
+      if (!group) {
+        res.status(404).json({ error: "Grupo no encontrado" });
+        return;
+      }
+      const students = await this.groupRepository.getStudentsByGroup(groupId);
+      res.json(students);
+    } catch (err) {
+      next(err);
+    }
+  };
+
   isEnrolled = async (
     req: Request<{ id: string }>,
     res: Response,

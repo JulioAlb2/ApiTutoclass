@@ -437,6 +437,43 @@ export const swaggerSpec = {
         },
       },
     },
+    "/groups/{id}/students": {
+      get: {
+        tags: ["Grupos"],
+        summary: "Listar alumnos inscritos en un grupo",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        responses: {
+          200: {
+            description: "Lista de alumnos",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "integer" },
+                      name: { type: "string" },
+                      email: { type: "string" },
+                      joinedAt: { type: "string", format: "date-time" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: {
+            description: "No autenticado",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+          404: {
+            description: "Grupo no encontrado",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+        },
+      },
+    },
     "/groups/{groupId}/events": {
       get: {
         tags: ["Mensajes"],
