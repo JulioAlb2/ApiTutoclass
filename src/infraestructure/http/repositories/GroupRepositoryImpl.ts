@@ -1,4 +1,4 @@
-import { IGroupRepository } from "../../../domain/interfaces/IGroupRepository";
+import type { IGroupRepository, GroupStudent } from "../../../domain/interfaces/IGroupRepository";
 import { db } from "../database/connection";
 import { Group } from "../../../domain/entities/group.entity";
 import { GroupStatus } from "../../../domain/enums/stateGroup.enum";
@@ -224,6 +224,30 @@ export class GroupRepositoryImpl implements IGroupRepository {
       return result.rows.length > 0;
     } catch (error) {
       throw new Error(`Error al verificar inscripción: ${error}`);
+    }
+  }
+
+  async getStudentsByGroup(groupId: number): Promise<GroupStudent[]> {
+    try {
+      const result = await db.query(
+        `SELECT u.id, u.nombre, u.email, gu.joined_at
+         FROM usuarios u
+         INNER JOIN grupo_usuarios gu ON u.id = gu.usuario_id
+         WHERE gu.grupo_id = ?
+         ORDER BY gu.joined_at ASC`,
+        [groupId]
+      );
+      return result.rows.map((row) => {
+        const r = row as { id: number; nombre: string; email: string; joined_at: Date };
+        return {
+          id: r.id,
+          name: r.nombre,
+          email: r.email,
+          joinedAt: new Date(r.joined_at),
+        };
+      });
+    } catch (error) {
+      throw new Error(`Error al obtener alumnos del grupo: ${error}`);
     }
   }
 }

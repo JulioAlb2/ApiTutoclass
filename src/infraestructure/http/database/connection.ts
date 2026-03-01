@@ -1,10 +1,17 @@
 import "dotenv/config";
 import mysql from "mysql2";
+import { logger } from "../../../shared/logger";
+
+const dbHost = process.env.DB_HOST ?? "localhost";
+const dbPort = parseInt(process.env.DB_PORT ?? "3306", 10);
+const dbName = process.env.DB_NAME ?? "tutoclass";
+
+logger.info(`Conectando a MySQL ${dbHost}:${dbPort}/${dbName}`);
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST ?? "localhost",
-  port: parseInt(process.env.DB_PORT ?? "3306", 10),
-  database: process.env.DB_NAME ?? "tutoclass",
+  host: dbHost,
+  port: dbPort,
+  database: dbName,
   user: process.env.DB_USER ?? "root",
   password: process.env.DB_PASSWORD ?? "",
   waitForConnections: true,
