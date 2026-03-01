@@ -1,5 +1,8 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
+  "ts-node": {
+    "files": true
+  },
   "compilerOptions": {
     // File Layout
     "rootDir": "./src",
@@ -7,9 +10,10 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "target": "es2020",
-    "types": [],
+    "types": ["node"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -35,7 +39,7 @@
     // Recommended Options
     "strict": true,
     "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
