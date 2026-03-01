@@ -1,50 +1,40 @@
 import type { Request, Response, NextFunction } from "express";
+import { logger } from "../../../shared/logger";
+
+const STATUS_MAP: Record<string, number> = {
+  "Token no proporcionado": 401,
+  "Token inv?lido o expirado": 401,
+  "Token expirado": 401,
+  "Token inv?lido": 401,
+  "Sin permiso para esta acci?n": 403,
+  "No autenticado": 403,
+  "Grupo no encontrado": 404,
+  "Mensaje no encontrado": 404,
+  "Usuario no encontrado": 404,
+  "El email ya est? registrado": 400,
+  "Credenciales inv?lidas": 400,
+  "C?digo de acceso inv?lido": 400,
+  "El grupo no est? activo": 400,
+  "Ya est?s inscrito en este grupo": 400,
+  "No est?s inscrito en este grupo": 400,
+  "El c?digo de acceso ya est? en uso": 400,
+  "El mensaje no puede estar vac?o": 400,
+};
 
 export function errorHandler(
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void {
-  const message = err.message;
+  const status = STATUS_MAP[err.message] ?? 500;
 
-  if (
-    message === "Token no proporcionado" ||
-    message === "Token inválido o expirado" ||
-    message === "Token expirado" ||
-    message === "Token inválido"
-  ) {
-    res.status(401).json({ error: message });
+  if (status === 500) {
+    logger.error(`${req.method} ${req.originalUrl} ? 500`, err);
+    res.status(500).json({ error: "Error interno del servidor" });
     return;
   }
-  if (message === "Sin permiso para esta acción" || message === "No autenticado") {
-    res.status(403).json({ error: message });
-    return;
-  }
-  if (
-    message === "Grupo no encontrado" ||
-    message === "Mensaje no encontrado" ||
-    message === "Usuario no encontrado"
-  ) {
-    res.status(404).json({ error: message });
-    return;
-  }
-  if (
-    message === "El email ya está registrado" ||
-    message === "Credenciales inválidas" ||
-    message === "Código de acceso inválido" ||
-    message === "El grupo no está activo" ||
-    message === "Ya estás inscrito en este grupo" ||
-    message === "No estás inscrito en este grupo" ||
-    message === "El código de acceso ya está en uso" ||
-    message === "El mensaje no puede estar vacío"
-  ) {
-    res.status(400).json({ error: message });
-    return;
-  }
-  
-  console.error("[ERROR HANDLER] Error desconocido:", err.message);
-  console.error("[ERROR HANDLER] Stack:", err.stack);
-  console.error("[500]", err);
-  res.status(500).json({ error: "Error interno del servidor" });
+
+  logger.warn(`${req.method} ${req.originalUrl} ? ${status}: ${err.message}`);
+  res.status(status).json({ error: err.message });
 }

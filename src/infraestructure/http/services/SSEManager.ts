@@ -1,4 +1,5 @@
 import type { Response } from "express";
+import { logger } from "../../../shared/logger";
 
 type SSEClient = {
   id: string;
@@ -26,6 +27,7 @@ export class SSEManager {
     const clients = this.groups.get(groupId) ?? [];
     clients.push(client);
     this.groups.set(groupId, clients);
+    logger.info(`SSE cliente conectado: ${clientId} al grupo ${groupId} (${clients.length} activos)`);
 
     res.on("close", () => {
       this.removeClient(groupId, clientId);
@@ -42,6 +44,7 @@ export class SSEManager {
     } else {
       this.groups.set(groupId, filtered);
     }
+    logger.info(`SSE cliente desconectado: ${clientId} del grupo ${groupId} (${filtered.length} activos)`);
   }
 
   broadcast(groupId: number, event: SSEEvent): void {
@@ -52,6 +55,7 @@ export class SSEManager {
     for (const client of clients) {
       client.res.write(payload);
     }
+    logger.debug(`SSE broadcast [${event.type}] al grupo ${groupId} → ${clients.length} clientes`);
   }
 
   getClientCount(groupId: number): number {

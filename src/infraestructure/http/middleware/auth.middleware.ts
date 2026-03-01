@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import type { TokenService } from "../services/TokenService";
+import { logger } from "../../../shared/logger";
 
 export function authMiddleware(tokenService: TokenService) {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -9,6 +10,7 @@ export function authMiddleware(tokenService: TokenService) {
       : undefined;
 
     if (!token) {
+      logger.warn(`Auth sin token: ${req.method} ${req.originalUrl}`);
       res.status(401).json({ error: "Token no proporcionado" });
       return;
     }
@@ -16,7 +18,8 @@ export function authMiddleware(tokenService: TokenService) {
     try {
       req.user = tokenService.verifyToken(token);
       next();
-    } catch {
+    } catch (error) {
+      logger.warn(`Auth token inválido: ${req.method} ${req.originalUrl} — ${(error as Error).message}`);
       res.status(401).json({ error: "Token inválido o expirado" });
     }
   };
@@ -29,6 +32,7 @@ export function requireRole(...roles: string[]) {
       return;
     }
     if (!roles.includes(req.user.rol)) {
+      logger.warn(`Acceso denegado: usuario ${req.user.id} (${req.user.rol}) intentó ${req.method} ${req.originalUrl} — requiere [${roles.join(", ")}]`);
       res.status(403).json({ error: "Sin permiso para esta acción" });
       return;
     }
