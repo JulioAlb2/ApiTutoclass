@@ -11,6 +11,11 @@ export type SSEEvent = {
   data: unknown;
 };
 
+function flush(res: Response): void {
+  const r = res as Response & { flush?: () => void };
+  if (typeof r.flush === "function") r.flush();
+}
+
 export class SSEManager {
   private groups = new Map<number, SSEClient[]>();
 
@@ -18,10 +23,12 @@ export class SSEManager {
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      Connection: "keep-alive",
+      "Connection": "keep-alive",
+      "X-Accel-Buffering": "no",
     });
 
     res.write(`data: ${JSON.stringify({ type: "connected", groupId })}\n\n`);
+    flush(res);
 
     const client: SSEClient = { id: clientId, res };
     const clients = this.groups.get(groupId) ?? [];
@@ -54,6 +61,7 @@ export class SSEManager {
     const payload = `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;
     for (const client of clients) {
       client.res.write(payload);
+      flush(client.res);
     }
     logger.debug(`SSE broadcast [${event.type}] al grupo ${groupId} → ${clients.length} clientes`);
   }
